@@ -1,0 +1,52 @@
+# Visual Studio / Rider / .NET Core
+###################################
+[Bb]in/
+[Oo]bj/
+*.pdb
+*.suo
+*.user
+*.useros
+*.vspscc
+*.vssscc
+*.bak
+*min.js
+*min.css
+*.exe
+*.dll
+
+# Rider / IDE specific
+.idea/
+.Rider/
+
+# NuGet
+.nuget/
+packages/
+
+# ASP.NET Core
+*.AspNetCore.dll
+
+# Docker (for temporary files)
+**/.vscode/
+
+# Migration snapshots (залиште, якщо ви не хочете їх пушити, але зазвичай їх комітять)
+# BookStore.DataAccess/Migrations/
+
+# Other generated files
+obj/
+*.genruntimeconfig.cache
+
+# --- SECURITY & SECRETS (ОБОВ'ЯЗКОВО) ---
+# Ігноруємо файли налаштувань з паролями у будь-якій папці
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.local.json
+
+# Файли змінних оточення (якщо будеш використовувати)
+.env
+
+# --- LOGS ---
+*.log
+
+# --- OS FILES (Щоб не смітити в репозиторії) ---
+.DS_Store
+Thumbs.db
