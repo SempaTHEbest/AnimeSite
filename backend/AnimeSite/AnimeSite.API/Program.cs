@@ -1,3 +1,4 @@
+using AnimeSite.Application.Services;
 using AnimeSite.Core.Abstractions;
 using AnimeSite.DataAccess;
 using AnimeSite.DataAccess.Repositories;
@@ -20,6 +21,11 @@ builder.Services.AddDbContext<AnimeSiteDbContext>(options =>
 builder.Services.AddScoped<IAnimeRepository,  AnimeRepository>();
 builder.Services.AddScoped<IGenreRepository,  GenreRepository>();
 builder.Services.AddScoped<IEpisodeRepository, EpisodeRepository>();
+
+//Add Services
+builder.Services.AddScoped<IAnimeService, AnimeService>();
+builder.Services.AddScoped<IGenreService, GenreService>();
+builder.Services.AddScoped<IEpisodeService, EpisodeService>();
 
 var app = builder.Build();
 

@@ -17,6 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\AnimeSite.Application\AnimeSite.Application.csproj" />
       <ProjectReference Include="..\AnimeSite.DataAccess\AnimeSite.DataAccess.csproj" />
     </ItemGroup>
 

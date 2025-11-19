@@ -1,5 +1,5 @@
 using AnimeSite.API.Contracts;
-using AnimeSite.Core.Abstractions;
+using AnimeSite.Core.Abstractions; // Тут лежать інтерфейси сервісів
 using AnimeSite.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,54 +9,58 @@ namespace AnimeSite.API.Controllers;
 [Route("api/[controller]")]
 public class AnimeController : ControllerBase
 {
-    private readonly IAnimeRepository _animeRepository;
+    private readonly IAnimeService _animeService; // Використовуємо Сервіс
 
-    public AnimeController(IAnimeRepository animeRepository)
+    public AnimeController(IAnimeService animeService)
     {
-        _animeRepository = animeRepository;
+        _animeService = animeService;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<Anime>>> GetAll()
     {
-        var animes = await _animeRepository.Get();
+        var animes = await _animeService.GetAllAnimes();
         return Ok(animes);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<Anime>> GetById(Guid id)
     {
-        var anime = await _animeRepository.GetById(id);
+        var anime = await _animeService.GetAnimeById(id);
+        
         if (anime == null)
         {
             return NotFound();
         }
+        
         return Ok(anime);
     }
 
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreateAnimeRequest request)
     {
-        var (anime, error) = Anime.Create(
-            Guid.NewGuid(), // Генеруємо новий ID тут
-            request.Title,
-            request.Description,
-            request.ImageUrl,
-            request.Rating,
-            request.Studio,
-            request.Status,
-            request.Type,
-            request.ReleaseDate,
-            request.TotalEpisodes
-        );
-
-        if (!string.IsNullOrEmpty(error))
+        try
         {
-            return BadRequest(error);
-        }
+            // Просто передаємо дані в сервіс. 
+            // Сервіс сам створить ID, перевірить валідацію і збереже в базу.
+            await _animeService.CreateAnime(
+                request.Title,
+                request.Description,
+                request.ImageUrl,
+                request.Rating,
+                request.Studio,
+                request.Status,
+                request.Type,
+                request.ReleaseDate,
+                request.TotalEpisodes
+            );
 
-        await _animeRepository.Add(anime);
-        return Ok();
+            return Ok();
+        }
+        catch (ArgumentException ex)
+        {
+            // Якщо сервіс викинув помилку (наприклад, пуста назва), повертаємо 400 Bad Request
+            return BadRequest(ex.Message);
+        }
     }
-    
 }

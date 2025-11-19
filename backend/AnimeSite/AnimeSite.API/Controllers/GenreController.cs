@@ -1,47 +1,46 @@
+using AnimeSite.API.Contracts;
 using AnimeSite.Core.Abstractions;
 using AnimeSite.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AnimeSite.API.Controllers;
 
-public record CreateGenreRequest(string Name);
-
 [ApiController]
 [Route("api/[controller]")]
 public class GenreController : ControllerBase
 {
-    private readonly IGenreRepository _genreRepository;
-    
-    public GenreController(IGenreRepository genreRepository)
+    private readonly IGenreService _genreService;
+
+    public GenreController(IGenreService genreService)
     {
-        _genreRepository = genreRepository;
+        _genreService = genreService;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<Genre>>> GetAll()
     {
-        var genres = await _genreRepository.GetAll();
-        return Ok(genres); 
+        var genres = await _genreService.GetAllGenres();
+        return Ok(genres);
     }
 
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreateGenreRequest request)
     {
-        var (genre, error) = Genre.Create(
-            Guid.NewGuid(), 
-            request.Name
-        );
-
-        if (!string.IsNullOrEmpty(error)) return BadRequest(error);
-
-        await _genreRepository.Add(genre);
-        return Ok();
+        try
+        {
+            await _genreService.CreateGenre(request.Name);
+            return Ok();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult> Delete(Guid id)
     {
-        await _genreRepository.Delete(id);
+        await _genreService.DeleteGenre(id);
         return Ok();
     }
 }
