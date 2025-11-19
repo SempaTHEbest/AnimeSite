@@ -1,10 +1,11 @@
+using AnimeSite.Core.Abstractions;
 using AnimeSite.Core.Models;
 using AnimeSite.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace AnimeSite.DataAccess.Repositories;
 
-public class AnimeRepository
+public class AnimeRepository : IAnimeRepository
 {
     private readonly AnimeSiteDbContext _context;
 

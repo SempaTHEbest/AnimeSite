@@ -1,10 +1,11 @@
+using AnimeSite.Core.Abstractions;
 using AnimeSite.Core.Models;
 using AnimeSite.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace AnimeSite.DataAccess.Repositories;
 
-public class EpisodeRepository
+public class EpisodeRepository : IEpisodeRepository
 {
     private readonly AnimeSiteDbContext _context;
 
@@ -13,7 +14,7 @@ public class EpisodeRepository
         _context = context;
     }
 
-    public async Task<List<Episode>> GetAnimeById(Guid animeId)
+    public async Task<List<Episode>> GetByAnimeId(Guid animeId)
     {
         var entities = await _context.Episodes
             .AsNoTracking()
