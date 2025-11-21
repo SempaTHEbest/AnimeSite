@@ -42,15 +42,48 @@ public class UserRepository : IUserRepository
         return MapToDomain(userEntity);
     }
 
+    public async Task<List<User>> GetAll()
+    {
+        var userEntities = await _context.Users
+            .AsNoTracking()
+            .ToListAsync();
+        return userEntities.Select(u => MapToDomain(u)).ToList();
+    }
+
+    public async Task<User?> GetById(Guid id)
+    {
+        var userEntity = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (userEntity == null)
+        {
+            return null;
+        }
+        
+        return MapToDomain(userEntity);
+    }
+
     private User MapToDomain(UserEntity entity)
     {
+        // 1. Якщо це Google користувач
         if (!string.IsNullOrEmpty(entity.GoogleId))
         {
-            var (user, _) = User.CreateGoogleUser(entity.Id, entity.Email, entity.GoogleId);
-            return user;
+            var (googleUser, googleError) = User.CreateGoogleUser(entity.Id, entity.Email, entity.GoogleId);
+            return googleUser;
+        }
+        
+        // 2. Якщо це звичайний користувач
+        var (normalUser, error) = User.Create(entity.Id, entity.Username, entity.Email, entity.PasswordHash);
+        
+        // !!! ОСЬ ТУТ БУЛА ПРОБЛЕМА !!!
+        // Раніше ми просто повертали normalUser (який був null), і сервіс думав, що юзера немає.
+        // Тепер ми явно кидаємо помилку, щоб побачити її в Swagger.
+        if (!string.IsNullOrEmpty(error) || normalUser == null)
+        {
+            throw new InvalidOperationException($"Data Integrity Error for User {entity.Email}: {error}");
         }
 
-        var (normalUser, _) = User.Create(entity.Id, entity.Username, entity.Email, entity.PasswordHash);
         return normalUser;
     }
 }

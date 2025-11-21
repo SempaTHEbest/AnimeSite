@@ -37,6 +37,7 @@ builder.Services.AddScoped<IEpisodeService, EpisodeService>();
 //Auth services
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
+builder.Services.AddScoped<IUserService, UserService >();
 
 //Add auth
 builder.Services.AddAuthentication(options =>
@@ -67,6 +68,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
