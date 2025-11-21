@@ -3,19 +3,21 @@ namespace AnimeSite.Core.Models;
 public class User
 {
     private const int MaxUsernameLength = 30;
-    public User(Guid id, string username, string email, string passwordHash, string googleId)
+    public User(Guid id, string username, string email, string passwordHash, string googleId, Role role)
     {
         Id = id;
         Username = username;
         Email = email;
         PasswordHash = passwordHash;
         GoogleId = googleId;
+        Role = role;
     }
     public Guid Id { get;}
     public string Username { get;}
     public string Email { get;}
     public string PasswordHash { get; } = string.Empty;
     public string GoogleId { get; } = string.Empty;
+    public Role Role { get;}
     
     //Fabric static method
     public static (User user, string Error) Create(Guid id, string username, string email, string passwordHash)
@@ -43,7 +45,7 @@ public class User
         }
 
         // googleId передаємо як null або пустий рядок
-        var user = new User(id, username, email, passwordHash, string.Empty);
+        var user = new User(id, username, email, passwordHash, string.Empty, Role.User);
         return (user, error);
     }
     
@@ -71,7 +73,12 @@ public class User
         var username = email.Split('@')[0]; 
 
         // passwordHash пустий, бо пароля немає
-        var user = new User(id, username, email, string.Empty, googleId);
+        var user = new User(id, username, email, string.Empty, googleId, Role.User);
         return (user, error);
+    }
+
+    public static User Restore(Guid id, string username, string email, string passwordHash, string googleId, Role role)
+    {
+        return new User(id, username, email, passwordHash, googleId, role);
     }
 }

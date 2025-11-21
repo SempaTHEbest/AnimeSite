@@ -22,7 +22,8 @@ public class UserRepository : IUserRepository
             Username = user.Username,
             Email = user.Email,
             PasswordHash = user.PasswordHash,
-            GoogleId = user.GoogleId
+            GoogleId = user.GoogleId,
+            RoleId = (int)user.Role
         };
         
         await _context.Users.AddAsync(userEntity);
@@ -63,6 +64,7 @@ public class UserRepository : IUserRepository
         
         return MapToDomain(userEntity);
     }
+    
 
     private User MapToDomain(UserEntity entity)
     {
@@ -84,6 +86,13 @@ public class UserRepository : IUserRepository
             throw new InvalidOperationException($"Data Integrity Error for User {entity.Email}: {error}");
         }
 
-        return normalUser;
+        return User.Restore(
+            entity.Id, 
+            entity.Username, 
+            entity.Email, 
+            entity.PasswordHash, 
+            entity.GoogleId, 
+            (Role)entity.RoleId // Перетворюємо int назад в Enum
+        );
     }
 }

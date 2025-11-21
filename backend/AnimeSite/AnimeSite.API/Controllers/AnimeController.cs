@@ -1,6 +1,7 @@
 using AnimeSite.API.Contracts;
 using AnimeSite.Core.Abstractions; // Тут лежать інтерфейси сервісів
 using AnimeSite.Core.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AnimeSite.API.Controllers;
@@ -37,6 +38,7 @@ public class AnimeController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Create([FromBody] CreateAnimeRequest request)
     {
         try
