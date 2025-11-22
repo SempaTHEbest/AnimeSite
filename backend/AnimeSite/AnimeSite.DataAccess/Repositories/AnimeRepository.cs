@@ -15,19 +15,31 @@ public class AnimeRepository : IAnimeRepository
     }
 
 
-    public async Task<List<Anime>> Get()
+    public async Task<(List<Anime> Items, int TotalCount)> Get(string? search, int page, int pageSize)
     {
-        var animeEntities = await _context.Animes
+        var query = _context.Animes
             .AsNoTracking()
             .Include(a => a.AnimeGenres)
-            .ThenInclude(ag => ag.Genre)
-            .ToListAsync();
+            .ThenInclude(ag =>  ag.Genre)
+            .AsQueryable();
 
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(a => a.Title.Contains(search));
+        }
+        
+        var totalCount = await query.CountAsync();
+        
+        //pagination
+        var animeEntities = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        
         var animes = animeEntities
             .Select(a => MapToDomain(a))
             .ToList();
-
-        return animes;
+        return (animes, totalCount);
     }
     
     public async Task<Anime?> GetById(Guid id)

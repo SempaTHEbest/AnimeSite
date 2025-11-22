@@ -12,9 +12,9 @@ public class AnimeService : IAnimeService
         _animeRepository = animeRepository;
     }
 
-    public async Task<List<Anime>> GetAllAnimes()
+    public async Task<(List<Anime> Items, int TotalCount)> GetAllAnimes(string? search, int page, int pageSize)
     {
-        return await _animeRepository.Get();
+        return await _animeRepository.Get(search, page, pageSize);
     }
 
     public async Task<Anime?> GetAnimeById(Guid id)

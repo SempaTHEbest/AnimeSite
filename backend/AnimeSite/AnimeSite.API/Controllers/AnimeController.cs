@@ -18,10 +18,33 @@ public class AnimeController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<Anime>>> GetAll()
+    public async Task<ActionResult<PagedResponse<AnimeResponse>>> GetAll(
+        [FromQuery] string? search,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var animes = await _animeService.GetAllAnimes();
-        return Ok(animes);
+        var (animes, totalCount) = await _animeService.GetAllAnimes(search, page, pageSize);
+        
+        var animeResponses = animes.Select(a => new AnimeResponse(
+            a.Id,
+            a.Title,
+            a.Description,
+            a.ImageUrl,
+            a.Rating,
+            a.Studio,
+            a.Status,
+            a.Type,
+            a.ReleaseDate,
+            a.TotalEpisodes
+        )).ToList();
+        
+        var response = new PagedResponse<AnimeResponse>(
+            animeResponses,
+            totalCount,
+            page,
+            pageSize
+        );
+        return Ok(response);
     }
 
     [HttpGet("{id:guid}")]
