@@ -14,12 +14,12 @@ public class AnimeRepository : IAnimeRepository
         _context = context;
     }
 
-    // 1. Отримати всі аніме
+
     public async Task<List<Anime>> Get()
     {
         var animeEntities = await _context.Animes
-            .AsNoTracking() // Для читання це пришвидшує роботу
-            .Include(a => a.AnimeGenres) // Обов'язково вантажимо зв'язки
+            .AsNoTracking()
+            .Include(a => a.AnimeGenres)
             .ThenInclude(ag => ag.Genre)
             .ToListAsync();
 
@@ -29,8 +29,7 @@ public class AnimeRepository : IAnimeRepository
 
         return animes;
     }
-
-    // 2. Отримати одне аніме по ID
+    
     public async Task<Anime?> GetById(Guid id)
     {
         var animeEntity = await _context.Animes
@@ -47,7 +46,6 @@ public class AnimeRepository : IAnimeRepository
         return MapToDomain(animeEntity);
     }
 
-    // 3. Додати нове аніме
     public async Task Add(Anime anime)
     {
         var animeEntity = new AnimeEntity
@@ -62,17 +60,14 @@ public class AnimeRepository : IAnimeRepository
             Type = anime.Type,
             ReleaseDate = anime.ReleaseDate,
             TotalEpisodes = anime.TotalEpisodes
-            // Тут ще треба буде логіку для додавання GenreEntity, але про це окремо
         };
 
         await _context.Animes.AddAsync(animeEntity);
         await _context.SaveChangesAsync();
     }
 
-    // --- ПРИВАТНИЙ МЕТОД МАПІНГУ ---
-    private Anime MapToDomain(AnimeEntity entity)
+    public Anime MapToDomain(AnimeEntity entity)
     {
-        // Тепер тут немає конфлікту! Просто пишемо Anime.Create
         var (anime, error) = Anime.Create(
             entity.Id,
             entity.Title,
@@ -91,15 +86,12 @@ public class AnimeRepository : IAnimeRepository
             throw new InvalidOperationException(error);
         }
 
-        // Мапимо жанри
         var genresList = new List<Genre>();
         
-        // Перевірка на null, щоб не впало, якщо жанрів немає
         if (entity.AnimeGenres != null) 
         {
             foreach (var animeGenre in entity.AnimeGenres)
             {
-                // Тут теж все чисто - Genre.Create
                 var (genre, genreError) = Genre.Create(animeGenre.Genre.Id, animeGenre.Genre.Name);
                 
                 if (!string.IsNullOrEmpty(genreError))

@@ -10,7 +10,7 @@ namespace AnimeSite.API.Controllers;
 [Route("api/[controller]")]
 public class AnimeController : ControllerBase
 {
-    private readonly IAnimeService _animeService; // Використовуємо Сервіс
+    private readonly IAnimeService _animeService; 
 
     public AnimeController(IAnimeService animeService)
     {
@@ -43,8 +43,7 @@ public class AnimeController : ControllerBase
     {
         try
         {
-            // Просто передаємо дані в сервіс. 
-            // Сервіс сам створить ID, перевірить валідацію і збереже в базу.
+            
             await _animeService.CreateAnime(
                 request.Title,
                 request.Description,
@@ -61,7 +60,6 @@ public class AnimeController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            // Якщо сервіс викинув помилку (наприклад, пуста назва), повертаємо 400 Bad Request
             return BadRequest(ex.Message);
         }
     }
