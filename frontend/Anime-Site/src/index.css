@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  /* Додаємо наші кастомні кольори */
+  --color-anime-dark: #0a0b1e;
+  --color-anime-accent: #ff4d4d;
+  --color-anime-gray: #1f2937;
+
+  /* Додаємо шрифт заголовків (якщо він не підтягнеться, буде просто sans) */
+  --font-heading: "Oswald", sans-serif;
+  --font-sans: "Inter", sans-serif;
+  
+  /* Анімації (опціонально, щоб було красиво) */
+  --animate-fade-in: fade-in 0.5s ease-in-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Скидання стилів для body, щоб фон був темним на всю сторінку */
+body {
+  background-color: var(--color-anime-dark);
+  color: white;
+  margin: 0;
+  font-family: var(--font-sans);
+}

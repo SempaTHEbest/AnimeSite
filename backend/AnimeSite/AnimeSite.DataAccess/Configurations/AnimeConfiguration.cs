@@ -17,7 +17,7 @@ public class AnimeConfiguration : IEntityTypeConfiguration<AnimeEntity>
         builder.Property(a => a.Description)
             .IsRequired();
         builder.Property(a => a.ImageUrl)
-            .HasMaxLength(100)
+            .HasMaxLength(500)
             .IsRequired();
         builder.Property(a => a.Studio)
             .HasMaxLength(100)
