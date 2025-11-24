@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using AnimeSite.API.Contracts.Auth;
 using AnimeSite.Core.Abstractions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AnimeSite.API.Controllers;
@@ -57,7 +59,7 @@ public class UsersController : ControllerBase
         }
     }
     
-    //GET
+    // GET ALL
     [HttpGet]
     public async Task<ActionResult<List<UserResponse>>> GetAll()
     {
@@ -66,10 +68,15 @@ public class UsersController : ControllerBase
         var response = users.Select(u => new UserResponse(
             u.Id,
             u.Username,
-            u.Email));
+            u.Email,
+            u.AvatarUrl, // Тепер ці поля передаються
+            u.Bio        // Тепер ці поля передаються
+        ));
+        
         return Ok(response);
     }
 
+    // GET BY ID (Для профілю)
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserResponse>> GetById(Guid id)
     {
@@ -83,8 +90,43 @@ public class UsersController : ControllerBase
         var response = new UserResponse(
             user.Id,
             user.Username,
-            user.Email);
+            user.Email,
+            user.AvatarUrl, // <-- Важливо: повертаємо аватарку
+            user.Bio        // <-- Важливо: повертаємо опис
+        );
+        
         return Ok(response);
     }
 
+    [HttpPut("profile")] 
+    [Authorize]
+    public async Task<ActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+    {
+        var userId = GetUserId();
+        
+        try 
+        {
+            // УВАГА: Переконайся, що порядок аргументів тут співпадає з твоїм IUserService!
+            // Зазвичай це: (id, avatarUrl, bio)
+            await _userService.UpdateProfile(userId, request.AvatarUrl, request.Bio);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    // Допоміжний метод для витягування ID з токена
+    private Guid GetUserId()
+    {
+        var idClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        
+        if (idClaim == null)
+        {
+            throw new Exception("User not authorized or token is invalid");
+        }
+
+        return Guid.Parse(idClaim.Value);
+    }
 }

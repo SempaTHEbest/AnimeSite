@@ -9,4 +9,5 @@ public interface IUserService
     Task<string> LoginGoogle(string email, string googleId, string username);
     Task<List<User>> GetAllUsers();
     Task<User?> GetById(Guid id);
+    Task UpdateProfile(Guid userId, string bio, string avatarUrl);
 }

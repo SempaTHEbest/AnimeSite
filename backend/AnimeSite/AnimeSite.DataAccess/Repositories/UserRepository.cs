@@ -64,6 +64,16 @@ public class UserRepository : IUserRepository
         
         return MapToDomain(userEntity);
     }
+
+    public async Task Update(User user)
+    {
+        var entity = await _context.Users.FirstOrDefaultAsync(u => u.Id == user.Id);
+        if (entity != null)
+        {
+            entity.Bio = user.Bio;
+            entity.AvatarUrl = user.AvatarUrl;
+        }
+    }
     
 
     private User MapToDomain(UserEntity entity)
@@ -92,7 +102,9 @@ public class UserRepository : IUserRepository
             entity.Email, 
             entity.PasswordHash, 
             entity.GoogleId, 
-            (Role)entity.RoleId // Перетворюємо int назад в Enum
+            (Role)entity.RoleId, // Перетворюємо int назад в Enum
+            entity.Bio,
+            entity.AvatarUrl
         );
     }
 }

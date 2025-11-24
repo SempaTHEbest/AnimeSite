@@ -8,4 +8,6 @@ public class UserEntity
     public string PasswordHash { get; set; } = string.Empty;
     public string GoogleId { get; set; } = string.Empty;
     public int RoleId { get; set; }
+    public string Bio { get; set; } = string.Empty;
+    public string AvatarUrl { get; set; } = string.Empty;
 }

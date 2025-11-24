@@ -81,4 +81,17 @@ public class UserService : IUserService
     {
         return await _userRepository.GetById(Id);
     }
+
+    public async Task UpdateProfile(Guid userId, string bio, string avatarUrl)
+    {
+        var user = await _userRepository.GetById(userId);
+        if (user == null) throw new Exception("User with this id does not exist");
+        
+        user.UpdateProfile(bio, avatarUrl);
+        await _userRepository.Update(user);
+    }
+    
+    
+    
+    
 }
