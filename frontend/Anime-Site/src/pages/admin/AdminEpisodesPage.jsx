@@ -28,14 +28,13 @@ const AdminEpisodesPage = () => {
                 setEpisodes(epRes.data);
                 
                 if (epRes.data.length > 0) {
-                    // Знаходимо останній епізод, щоб підставити наступний номер
                     const sorted = epRes.data.sort((a,b) => a.episodeNumber - b.episodeNumber);
                     const lastEp = sorted[sorted.length - 1];
                     
                     setFormData(prev => ({ 
                         ...prev, 
-                        seasonNumber: lastEp.seasonNumber, // Залишаємо той самий сезон
-                        episodeNumber: lastEp.episodeNumber + 1 // Збільшуємо номер серії
+                        seasonNumber: lastEp.seasonNumber, 
+                        episodeNumber: lastEp.episodeNumber + 1 
                     }));
                 }
             } catch (error) {
@@ -64,9 +63,24 @@ const AdminEpisodesPage = () => {
                 episodeLink: ''
             }));
         } catch (error) {
-            // Безпечна обробка помилки
             const msg = error.response?.data || error.message;
             alert("Failed to add episode: " + msg);
+        }
+    };
+
+    // --- НОВА ФУНКЦІЯ: ВИДАЛЕННЯ ЕПІЗОДУ ---
+    const handleDelete = async (episodeId) => {
+        if (!window.confirm("Are you sure you want to delete this episode?")) return;
+
+        try {
+            // Викликаємо бекенд (припускаю, що маршрут DELETE /api/episode/{id})
+            await api.delete(`/episode/${episodeId}`);
+            
+            // Оновлюємо список локально
+            setEpisodes(prev => prev.filter(ep => ep.id !== episodeId));
+        } catch (error) {
+            console.error("Delete failed", error);
+            alert("Failed to delete episode. Check console.");
         }
     };
 
@@ -94,8 +108,6 @@ const AdminEpisodesPage = () => {
                         <span className="text-anime-accent">+</span> Add New Episode
                     </h3>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        
-                        {/* ВИПРАВЛЕНА ЧАСТИНА: Чіткі підписи для Сезону та Епізоду */}
                         <div className="flex gap-4">
                             <div className="w-1/2">
                                 <label className="block text-xs text-gray-400 mb-1 font-bold uppercase tracking-wider">
@@ -159,9 +171,8 @@ const AdminEpisodesPage = () => {
                     </div>
                     <div className="overflow-y-auto flex-1 p-4 space-y-2 custom-scrollbar">
                         {episodes.length > 0 ? (
-                            // Сортуємо: Спочатку Сезони, потім Епізоди
                             episodes.sort((a,b) => (a.seasonNumber - b.seasonNumber) || (a.episodeNumber - b.episodeNumber)).map(ep => (
-                                <div key={ep.id} className="flex items-center justify-between bg-gray-700/30 p-3 rounded border border-gray-700 hover:bg-gray-700 transition">
+                                <div key={ep.id} className="flex items-center justify-between bg-gray-700/30 p-3 rounded border border-gray-700 hover:bg-gray-700 transition group">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center font-bold text-anime-accent text-sm border border-gray-600">
                                             {ep.episodeNumber}
@@ -177,6 +188,15 @@ const AdminEpisodesPage = () => {
                                         <a href={ep.episodeLink} target="_blank" rel="noreferrer" className="text-xs text-blue-400 hover:underline bg-blue-900/20 px-2 py-1 rounded border border-blue-900/50">
                                             Link ↗
                                         </a>
+                                        
+                                        {/* КНОПКА ВИДАЛЕННЯ */}
+                                        <button 
+                                            onClick={() => handleDelete(ep.id)}
+                                            className="text-xs text-red-400 hover:text-white bg-red-900/20 px-2 py-1 rounded border border-red-900/50 hover:bg-red-600 transition"
+                                            title="Delete Episode"
+                                        >
+                                            🗑
+                                        </button>
                                     </div>
                                 </div>
                             ))
