@@ -20,50 +20,63 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const getUserFromToken = (token) => {
+    // Функція для отримання розширених даних про юзера
+    // Токен має тільки ім'я, а нам треба ще Аватар і Біо
+    const fetchUserProfile = async (token) => {
         const decoded = parseJwt(token);
         if (!decoded) return null;
 
-        // Ключі .NET Identity
-        const nameKey = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name";
-        const roleKey = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+        // Шукаємо ID в токені (nameid або sub)
+        const idKey = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
+        const userId = decoded[idKey] || decoded.sub;
 
-        let username = decoded[nameKey] || decoded.unique_name || decoded.name || "User";
-        
-        // Отримуємо роль. Якщо її немає, ставимо "User"
-        let role = decoded[roleKey] || decoded.role || "User";
-        
-        // Якщо ролей декілька (масив), беремо "Admin", якщо він там є, або просто першу
-        if (Array.isArray(role)) {
-            role = role.includes("Admin") ? "Admin" : role[0];
+        // Базовий об'єкт з токена
+        let userData = { 
+            username: decoded.unique_name || decoded.name || "User", 
+            role: decoded.role || "User",
+            token 
+        };
+
+        // Пробуємо підтягнути повні дані з бекенду (Avatar, Bio)
+        if (userId) {
+            try {
+                const response = await api.get(`/users/${userId}`);
+                // Об'єднуємо дані з токена і дані з БД
+                userData = { ...userData, ...response.data }; 
+            } catch (err) {
+                console.warn("Could not fetch full profile", err);
+            }
         }
-
-        return { username, role, token };
+        return userData;
     };
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            const userData = getUserFromToken(token);
-            if (userData) {
-                setUser(userData);
-            } else {
-                localStorage.removeItem('token');
+        const initializeAuth = async () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                const userData = await fetchUserProfile(token);
+                if (userData) setUser(userData);
+                else localStorage.removeItem('token');
             }
-        }
-        setLoading(false);
+            setLoading(false);
+        };
+        initializeAuth();
     }, []);
 
     const login = async (email, password) => {
         const response = await api.post('/users/login', { email, password });
         const token = response.data; 
         localStorage.setItem('token', token);
-        setUser(getUserFromToken(token));
+        
+        // Завантажуємо повний профіль при вході
+        const userData = await fetchUserProfile(token);
+        setUser(userData);
         return true;
     };
 
-    const register = async (username, email, password) => {
-        await api.post('/users/register', { username, email, password });
+    // --- НОВА ФУНКЦІЯ: Оновлення даних локально ---
+    const updateUserLocal = (newData) => {
+        setUser(prev => ({ ...prev, ...newData }));
     };
 
     const logout = () => {
@@ -71,8 +84,14 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
+    const register = async (username, email, password) => {
+        await api.post('/users/register', { username, email, password });
+    };
+
+    // Експорт googleAuth якщо він у тебе є...
+
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, register, logout, updateUserLocal, loading }}>
             {!loading && children}
         </AuthContext.Provider>
     );
