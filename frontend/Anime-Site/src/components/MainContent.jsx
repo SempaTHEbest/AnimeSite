@@ -1,37 +1,55 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom'; // Імпорт для навігації
-import api from '../api/axios'; // Твій налаштований axios
-import { topAnime } from '../data/mockData'; // Топ поки статичний (або видали, якщо не треба)
+import { Link } from 'react-router-dom';
+import api from '../api/axios';
+import { topAnime } from '../data/mockData'; 
 
 const MainContent = () => {
   const [animeList, setAnimeList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Стан для пошуку
+  const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    const fetchAnime = async () => {
+  // Функція завантаження
+  const fetchAnime = async (query = '') => {
+      setLoading(true);
       try {
-        setLoading(true);
-        // Запит до твого контролера: api/anime
-        const response = await api.get('/anime?page=1&pageSize=20'); 
-        
-        console.log("Response from server:", response.data);
+        const endpoint = query 
+            ? `/anime?search=${encodeURIComponent(query)}&page=1&pageSize=20`
+            : `/anime?page=1&pageSize=20`;
 
-        // Обробка PagedResponse (Items або items)
+        const response = await api.get(endpoint);
+        
         const data = response.data;
         const animes = data.items || data.Items || []; 
         
         setAnimeList(animes);
       } catch (err) {
         console.error("Error fetching anime:", err);
-        setError("Failed to load anime. Make sure the backend is running.");
+        setError("Failed to load anime.");
       } finally {
         setLoading(false);
       }
-    };
+  };
 
-    fetchAnime();
-  }, []);
+  // --- ГОЛОВНА ЗМІНА: LIVE SEARCH (DEBOUNCE) ---
+  useEffect(() => {
+    // Створюємо таймер: чекаємо 500мс після останнього натискання клавіші
+    const delayDebounceFn = setTimeout(() => {
+      fetchAnime(searchQuery);
+    }, 500);
+
+    // Ця функція спрацює, якщо ти натиснеш клавішу до того, як пройшло 500мс
+    // Вона скасовує попередній таймер (щоб не відправляти зайві запити)
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]); // Спрацьовує щоразу, коли змінюється searchQuery
+
+  // Обробка натискання Enter (щоб не перезавантажувало сторінку)
+  const handleSearch = (e) => {
+      e.preventDefault();
+      // Тут fetchAnime викликати не треба, бо useEffect зробить це сам
+  };
 
   return (
     <div className="bg-anime-dark text-white py-16 px-4">
@@ -57,8 +75,28 @@ const MainContent = () => {
 
         {/* --- MAIN CONTENT (Right 2/3) --- */}
         <div className="md:col-span-8 lg:col-span-9">
-            <div className="flex justify-between items-end mb-6 border-b border-gray-800 pb-2">
-                <h3 className="font-heading text-2xl">Latest Updates</h3>
+            
+            {/* HEADER З ПОШУКОМ */}
+            <div className="flex flex-col md:flex-row justify-between items-end md:items-center mb-6 border-b border-gray-800 pb-4 gap-4">
+                <h3 className="font-heading text-2xl whitespace-nowrap">
+                    {searchQuery ? `Results for "${searchQuery}"` : "Latest Updates"}
+                </h3>
+                
+                {/* SEARCH BAR UI */}
+                <form onSubmit={handleSearch} className="relative w-full md:w-64 group">
+                    <input 
+                        type="text" 
+                        placeholder="Search anime..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)} // Це оновить state і тригерне useEffect
+                        className="w-full bg-gray-900 border border-gray-700 text-sm rounded-full px-4 py-2 pl-10 focus:outline-none focus:border-anime-accent focus:w-full transition-all text-white"
+                    />
+                    <button type="submit" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-anime-accent">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </form>
             </div>
 
             {loading ? (
@@ -66,9 +104,8 @@ const MainContent = () => {
                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-anime-accent"></div>
                </div>
             ) : error ? (
-                <div className="text-red-400 text-center py-10 border border-red-900/50 rounded bg-red-900/10">
-                    <p className="font-bold text-lg">Connection Error</p>
-                    <p className="text-sm mt-2">{error}</p>
+                <div className="text-red-400 text-center py-10">
+                    <p>{error}</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -76,7 +113,6 @@ const MainContent = () => {
                         animeList.map((item) => (
                         <div key={item.id} className="group bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-anime-accent/50 transition hover:-translate-y-1 relative shadow-lg shadow-black/50 flex flex-col h-full">
                             
-                            {/* Картинка з посиланням */}
                             <Link to={`/anime/${item.id}`} className="block h-64 overflow-hidden relative cursor-pointer">
                                 <img 
                                     src={item.imageUrl || "https://placehold.co/400x600?text=No+Image"} 
@@ -84,15 +120,11 @@ const MainContent = () => {
                                     className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
                                     onError={(e) => {e.target.src="https://placehold.co/400x600?text=Error"}} 
                                 />
-                                
-                                {/* Rating Badge */}
                                 {item.rating > 0 && (
                                     <div className="absolute top-2 right-2 bg-anime-accent text-white text-xs font-bold px-2 py-1 rounded shadow-lg">
                                         ★ {item.rating}
                                     </div>
                                 )}
-
-                                {/* Episodes Badge */}
                                 {item.totalEpisodes !== null && (
                                     <div className="absolute bottom-2 left-2 bg-black/80 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded border border-gray-700">
                                         {item.totalEpisodes} EP
@@ -101,7 +133,6 @@ const MainContent = () => {
                             </Link>
                             
                             <div className="p-4 flex flex-col flex-grow">
-                                {/* Title з посиланням */}
                                 <Link to={`/anime/${item.id}`}>
                                     <h4 className="font-bold text-lg truncate text-white group-hover:text-anime-accent transition mb-1" title={item.title}>
                                         {item.title}
@@ -122,8 +153,11 @@ const MainContent = () => {
                         </div>
                     ))
                     ) : (
-                        <div className="col-span-full text-center py-10 text-gray-500">
-                            No anime found.
+                        <div className="col-span-full text-center py-20">
+                            <p className="text-gray-500 text-xl">No anime found for "{searchQuery}"</p>
+                            <button onClick={() => {setSearchQuery('');}} className="mt-4 text-anime-accent hover:underline">
+                                Clear Search
+                            </button>
                         </div>
                     )}
                 </div>
