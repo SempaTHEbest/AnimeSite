@@ -19,7 +19,7 @@ public class EpisodeConfiguration : IEntityTypeConfiguration<EpisodeEntity>
             .IsRequired(false);
 
         builder.Property(e => e.EpisodeLink)
-            .HasMaxLength(500)
+            .HasMaxLength(1000)
             .IsRequired(false);
 
         builder.HasOne(e => e.Anime)

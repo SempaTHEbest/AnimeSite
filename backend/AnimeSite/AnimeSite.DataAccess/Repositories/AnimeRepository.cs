@@ -77,6 +77,21 @@ public class AnimeRepository : IAnimeRepository
         await _context.Animes.AddAsync(animeEntity);
         await _context.SaveChangesAsync();
     }
+    public async Task Delete(Guid id)
+    {
+        // 1. Шукаємо запис в БД
+        var animeEntity = await _context.Animes
+            .FirstOrDefaultAsync(a => a.Id == id);
+
+        // 2. Якщо знайшли - видаляємо
+        if (animeEntity != null)
+        {
+            _context.Animes.Remove(animeEntity);
+            await _context.SaveChangesAsync();
+        }
+        // Якщо не знайшли - можна нічого не робити, або кинути помилку, 
+        // але зазвичай Delete є ідемпотентним (якщо нема, то й добре).
+    }
 
     public Anime MapToDomain(AnimeEntity entity)
     {

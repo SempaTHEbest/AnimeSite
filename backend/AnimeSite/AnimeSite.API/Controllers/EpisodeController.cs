@@ -1,6 +1,7 @@
 using AnimeSite.API.Contracts;
 using AnimeSite.Core.Abstractions;
 using AnimeSite.Core.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AnimeSite.API.Controllers;
@@ -42,6 +43,21 @@ public class EpisodeController : ControllerBase
             return Ok();
         }
         catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> Delete(Guid id)
+    {
+        try
+        {
+            await _episodeService.DeleteEpisode(id);
+            return Ok();
+        }
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }

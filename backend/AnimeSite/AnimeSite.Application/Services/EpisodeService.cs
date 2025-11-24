@@ -37,4 +37,9 @@ public class EpisodeService : IEpisodeService
 
         await _episodeRepository.AddEpisode(episode);
     }
+
+    public async Task DeleteEpisode(Guid id)
+    {
+        await _episodeRepository.Delete(id);
+    }
 }

@@ -85,5 +85,21 @@ public class AnimeController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+        
+        
+    }
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")] 
+    public async Task<ActionResult> Delete(Guid id)
+    {
+        try
+        {
+            await _animeService.DeleteAnime(id);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }

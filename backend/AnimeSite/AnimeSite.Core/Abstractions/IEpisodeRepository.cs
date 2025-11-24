@@ -6,4 +6,5 @@ public interface IEpisodeRepository
 {
     Task<List<Episode>> GetByAnimeId(Guid animeId);
     Task AddEpisode(Episode episode);
+    Task Delete(Guid id);
 }

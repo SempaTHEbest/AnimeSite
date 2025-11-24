@@ -40,6 +40,18 @@ public class EpisodeRepository : IEpisodeRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task Delete(Guid id)
+    {
+        var episodeEntity = await _context.Episodes
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (episodeEntity != null)
+        {
+            _context.Episodes.Remove(episodeEntity);
+            await _context.SaveChangesAsync();
+        }
+    }
+
     private Episode MapToDomain(EpisodeEntity entity)
     {
         var (episode, error) = Episode.Create(

@@ -47,4 +47,10 @@ public class AnimeService : IAnimeService
         // 3. Зберігаємо через репозиторій
         await _animeRepository.Add(anime);
     }
+    public async Task DeleteAnime(Guid id)
+    {
+        // Просто передаємо ID в репозиторій. 
+        // Репозиторій сам знайде і видалить.
+        await _animeRepository.Delete(id);
+    }
 }
