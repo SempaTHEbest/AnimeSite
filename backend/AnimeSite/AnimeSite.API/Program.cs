@@ -57,12 +57,14 @@ builder.Services.AddScoped<IGenreRepository,  GenreRepository>();
 builder.Services.AddScoped<IEpisodeRepository, EpisodeRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IInteractionRepository, InteractionRepository>();
+builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
 
 //Add Services
 builder.Services.AddScoped<IAnimeService, AnimeService>();
 builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IEpisodeService, EpisodeService>();
 builder.Services.AddScoped<IInteractionService, InteractionService>();
+builder.Services.AddScoped<IHistoryService, HistoryService>();
 
 //Auth services
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();

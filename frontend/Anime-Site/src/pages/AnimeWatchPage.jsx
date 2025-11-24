@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext'; // <--- ІМПОРТУЄМО AUTH
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 
 const AnimeWatchPage = () => {
     const { id } = useParams();
+    const { user } = useAuth(); // <--- ДІСТАЄМО ЮЗЕРА
     const [anime, setAnime] = useState(null);
     const [episodes, setEpisodes] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -13,28 +15,35 @@ const AnimeWatchPage = () => {
     const [selectedSeason, setSelectedSeason] = useState(1);
     const [seasons, setSeasons] = useState([]);
 
-    // --- ФУНКЦІЯ КОНВЕРТАЦІЇ ПОСИЛАНЬ ---
+    // --- ЛОГІКА ДОДАВАННЯ В ІСТОРІЮ ---
+    useEffect(() => {
+        const addToHistory = async () => {
+            // Перевіряємо: чи є юзер, чи є поточний епізод
+            if (!user || !currentEpisode) return;
+
+            try {
+                // Відправляємо ID епізоду на сервер
+                // Зверни увагу: бекенд чекає [FromBody] Guid, тому передаємо його в лапках як JSON рядок
+                await api.post('/history', `"${currentEpisode.id}"`, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                console.log("Added to history:", currentEpisode.title);
+            } catch (error) {
+                console.error("Failed to update history:", error);
+            }
+        };
+
+        addToHistory();
+    }, [currentEpisode, user]); // Спрацьовує кожного разу, коли вмикається нова серія
+    // ------------------------------------
+
     const getEmbedUrl = (url) => {
         if (!url) return "";
-        
-        // 1. Якщо це вже embed посилання - повертаємо як є
         if (url.includes("/embed/")) return url;
-
-        // 2. Регулярний вираз для пошуку ID відео YouTube
-        // Підтримує формати: youtube.com/watch?v=ID, youtu.be/ID
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
         const match = url.match(regExp);
-
-        if (match && match[2].length === 11) {
-            return `https://www.youtube.com/embed/${match[2]}`;
-        }
-
-        // 3. Обробка Google Drive (заміна view на preview)
-        if (url.includes("drive.google.com") && url.includes("/view")) {
-            return url.replace("/view", "/preview");
-        }
-
-        // Якщо не розпізнали — повертаємо оригінал (наприклад, прямий файл mp4)
+        if (match && match[2].length === 11) return `https://www.youtube.com/embed/${match[2]}`;
+        if (url.includes("drive.google.com") && url.includes("/view")) return url.replace("/view", "/preview");
         return url; 
     };
 
@@ -88,19 +97,15 @@ const AnimeWatchPage = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
-                    {/* --- ПЛЕЄР --- */}
                     <div className="lg:col-span-2 space-y-4">
                         <div className="relative w-full pt-[56.25%] bg-black rounded-xl overflow-hidden border border-gray-800 shadow-2xl">
                             {currentEpisode ? (
                                 <iframe 
-                                    // ВИКОРИСТАННЯ ФУНКЦІЇ getEmbedUrl
                                     src={getEmbedUrl(currentEpisode.episodeLink)} 
                                     title={currentEpisode.title}
                                     className="absolute top-0 left-0 w-full h-full"
                                     frameBorder="0" 
                                     allowFullScreen
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 ></iframe>
                             ) : (
                                 <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-500">
@@ -121,7 +126,6 @@ const AnimeWatchPage = () => {
                         )}
                     </div>
 
-                    {/* --- СПИСОК СЕРІЙ --- */}
                     <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden flex flex-col max-h-[600px]">
                         <div className="p-4 border-b border-gray-800 overflow-x-auto flex gap-2 scrollbar-hide">
                             {seasons.map(season => (
@@ -174,7 +178,6 @@ const AnimeWatchPage = () => {
                             )}
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
