@@ -3,7 +3,6 @@ import api from '../api/axios';
 
 const AuthContext = createContext();
 
-// Функція для розшифровки JWT
 const parseJwt = (token) => {
     try {
         const base64Url = token.split('.')[1];
@@ -11,7 +10,6 @@ const parseJwt = (token) => {
         const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
-
         return JSON.parse(jsonPayload);
     } catch (e) {
         return null;
@@ -22,63 +20,45 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Логіка витягування імені з токена
     const getUserFromToken = (token) => {
         const decoded = parseJwt(token);
         if (!decoded) return null;
 
-        // .NET Identity часто використовує такі ключі:
-        const soapNameKey = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name";
-        const soapIdKey = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
+        // Ключі .NET Identity
+        const nameKey = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name";
+        const roleKey = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
 
-        // Шукаємо ім'я в порядку пріоритету
-        let username = 
-            decoded[soapNameKey] || // Стандартний ключ імені в .NET
-            decoded.unique_name ||  // Альтернатива
-            decoded.name ||         // Стандарт JWT
-            decoded.sub;            // Fallback
-
-        // Якщо ми випадково взяли ID (бо іноді sub = id), спробуємо знайти краще поле
-        // Перевіряємо, чи це не той самий ID, що в nameidentifier
-        if (decoded[soapIdKey] && username === decoded[soapIdKey]) {
-             // Якщо ім'я співпадає з ID, спробуємо знайти інше поле, схоже на ім'я
-             const potentialName = Object.keys(decoded).find(key => 
-                key.toLowerCase().includes('name') && 
-                !key.toLowerCase().includes('identifier') && 
-                !key.toLowerCase().includes('id')
-            );
-            if (potentialName) username = decoded[potentialName];
+        let username = decoded[nameKey] || decoded.unique_name || decoded.name || "User";
+        
+        // Отримуємо роль. Якщо її немає, ставимо "User"
+        let role = decoded[roleKey] || decoded.role || "User";
+        
+        // Якщо ролей декілька (масив), беремо "Admin", якщо він там є, або просто першу
+        if (Array.isArray(role)) {
+            role = role.includes("Admin") ? "Admin" : role[0];
         }
 
-        return { username: username || "Member", token };
+        return { username, role, token };
     };
 
     useEffect(() => {
-        const initializeAuth = () => {
-            const token = localStorage.getItem('token');
-            if (token) {
-                const userData = getUserFromToken(token);
-                if (userData) {
-                    setUser(userData);
-                } else {
-                    localStorage.removeItem('token');
-                }
+        const token = localStorage.getItem('token');
+        if (token) {
+            const userData = getUserFromToken(token);
+            if (userData) {
+                setUser(userData);
+            } else {
+                localStorage.removeItem('token');
             }
-            setLoading(false);
-        };
-
-        initializeAuth();
+        }
+        setLoading(false);
     }, []);
 
     const login = async (email, password) => {
         const response = await api.post('/users/login', { email, password });
         const token = response.data; 
-        
         localStorage.setItem('token', token);
-        
-        const userData = getUserFromToken(token);
-        setUser(userData);
-        
+        setUser(getUserFromToken(token));
         return true;
     };
 
